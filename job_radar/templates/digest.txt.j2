@@ -1,0 +1,40 @@
+Job Radar — {{ d.kind | capitalize }} · {{ d.generated_at.strftime("%Y-%m-%d") }}
+{{ d.counts.high }} high · {{ d.counts.med }} medium · {{ d.counts.low }} candidates
+({{ d.total_new }} new, {{ d.total_scored }} scored)
+
+{% if d.high %}
+=== High priority · 首投 ===
+{% for item in d.high %}
+[{{ item.score }}] {{ item.company }} — {{ item.title }}
+    {{ item.location }}{% if item.is_remote %} · Remote{% endif %}
+    {{ item.explanation }}
+    {{ item.explanation_zh }}
+    Keywords · 关键词: {{ item.matched_keywords | join(", ") }}
+    {% if item.reasons %}Why · 匹配理由:
+{% for r in item.reasons %}      - {{ r }}
+{% endfor %}{% endif %}
+    {% if item.risks %}Verify · 需要验证:
+{% for r in item.risks %}      ! {{ r }}
+{% endfor %}{% endif %}
+    Apply: {{ item.apply_url }}
+
+{% endfor %}
+{% endif %}
+
+{% if d.med %}
+=== Medium · 精投 ===
+{% for item in d.med %}
+[{{ item.score }}] {{ item.company }} — {{ item.title }}
+    {{ item.location }}{% if item.is_remote %} · Remote{% endif %}
+    {{ item.explanation_zh or item.explanation }}
+    Apply: {{ item.apply_url }}
+{% endfor %}
+{% endif %}
+
+{% if d.low %}
+=== Candidates · 候选 ({{ d.low | length }}) ===
+{% for item in d.low %}[{{ item.score }}] {{ item.company }} — {{ item.title }}
+{% endfor %}{% endif %}
+
+—
+job-radar · Scorer: heuristic (M1)

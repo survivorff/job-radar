@@ -1,0 +1,140 @@
+# job-radar profile — copy this to profile/me.yaml and edit.
+#
+# This drives the whole radar:
+#   · tracks       = the kinds of roles you want (each is an OR group of keywords)
+#   · exclude_*    = hard "never show me this" filters (matched on JOB TITLE only)
+#   · remote_only  = drop anything that isn't remote
+#   · LLM scoring  = reads your resume + the JD and scores 0-100 with reasons
+#
+# Tip: keep exclude_keywords to words that ONLY appear in titles you never want
+# (e.g. "Sales Manager"), NOT generic words that might appear in a good JD's body.
+
+name: me
+# Path to your resume in Markdown (used by the LLM scorer). Relative to this file
+# or absolute. Leave empty to skip resume-aware scoring.
+resume_path: ../resume.md
+
+# Only show remote roles (full-time / part-time / contract / co-founder all OK).
+remote_only: true
+employment_types:
+  - full-time
+  - part-time
+  - contract
+  - co-founder
+
+tracks:
+  # A track matches if >=1 include_keyword appears AND >=1 required_any appears
+  # (in the JD title or body). priority 1 = top, higher number = lower priority.
+  - id: backend
+    priority: 1
+    resume_version: V1
+    description: Senior backend / distributed systems
+    include_keywords:
+      - Backend
+      - Distributed Systems
+      - Microservices
+      - High Concurrency
+      - Java
+      - Go
+      - Python
+      - Kafka
+      - Redis
+      - gRPC
+    required_any:
+      - Senior
+      - Staff
+      - Principal
+      - Lead
+      - Architect
+
+  - id: ai_engineering
+    priority: 1
+    resume_version: V2
+    description: AI / LLM application & infra
+    include_keywords:
+      - AI Engineer
+      - LLM
+      - Agent
+      - RAG
+      - LangChain
+      - LangGraph
+      - MCP
+      - Machine Learning
+      - Applied AI
+    required_any:
+      - AI
+      - LLM
+      - ML
+      - Agent
+
+  - id: solutions
+    priority: 1
+    resume_version: V2
+    description: Forward Deployed Engineer / Solutions Architect / Solutions Engineer
+    include_keywords:
+      - Forward Deployed
+      - Solutions Architect
+      - Solutions Engineer
+      - Implementation Engineer
+      - Customer Engineer
+      - Field Engineer
+      - Delivery Solutions
+    required_any:
+      - Engineer
+      - Architect
+      - Solutions
+
+# Hard exclude — matched on the JOB TITLE only.
+exclude_keywords:
+  - Junior
+  - Intern
+  - Internship
+  - Associate
+  - Entry Level
+  - Graduate
+  - Sales Manager
+  - Account Executive
+  - Account Manager
+  - Marketing Manager
+  - Recruiter
+  - Customer Support
+  - Product Manager
+  - UX Designer
+
+seniority_allowlist:
+  - Senior
+  - Staff
+  - Principal
+  - Tech Lead
+  - Architect
+  - Head
+  - Director
+  - Founding
+seniority_blocklist:
+  - Junior
+  - Intern
+  - Entry Level
+  - Graduate
+
+# Used only when remote_only=false, to allow specific non-remote locations.
+location_allowlist:
+  - Remote
+  - Worldwide
+  - Global
+
+exp_min_years: 5
+exp_accept_unspecified: true
+
+blocked_companies: []
+boost_companies: []
+disabled_sources: []
+
+thresholds:
+  embed_recall_cosine: 0.35
+  llm_push_high: 90
+  llm_push_med: 75
+  llm_push_low: 60
+
+budget:
+  daily_llm_cny: 5
+  per_job_max_cny: 0.02

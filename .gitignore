@@ -1,0 +1,32 @@
+# Personal profile + resume (never commit)
+profile/me.yaml
+profile/*.local.yaml
+resume.md
+resume.*.md
+
+# Runtime data
+data/
+runs/
+logs/
+*.sqlite
+*.sqlite-journal
+*.db
+gmail_token.json
+
+# Secrets
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
