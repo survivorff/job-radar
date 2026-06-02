@@ -8,8 +8,6 @@ Priority:
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from loguru import logger
 
 from job_radar.channels import email_resend, email_smtp

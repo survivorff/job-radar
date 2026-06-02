@@ -136,7 +136,7 @@ LinkedIn 迂回方案：
 **红线**：
 1. ❌ 不模拟登录、不用 cookie 绕过鉴权
 2. ❌ 不做大规模并发（单站 1-2 req/s）
-3. ❌ 不伪装 User-Agent：`job-radar/0.1 (+github.com/<me>/job-hunting; personal use)`
+3. ❌ 不伪装 User-Agent：`job-radar/0.1 (+github.com/<me>/job-radar; personal use)`
 4. ❌ 不爬 robots.txt 明确 disallow 的路径
 5. ❌ 不转售 / 不公开推送给他人
 6. ❌ 不爬有反爬声明的站点（LinkedIn 除外，走邮件迂回）

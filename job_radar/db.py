@@ -6,9 +6,9 @@ Five tables as designed in docs/04-architecture.md:
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Iterator
 
 from sqlalchemy import (
     JSON,

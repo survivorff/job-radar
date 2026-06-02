@@ -6,8 +6,8 @@ Returns: {"job-count": N, "jobs": [ {id, url, title, company_name, ...} ]}
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import datetime
-from typing import Iterable
 
 from loguru import logger
 

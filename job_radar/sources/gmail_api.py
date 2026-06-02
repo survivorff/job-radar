@@ -23,16 +23,16 @@ from __future__ import annotations
 import base64
 import json
 import os
+from collections.abc import Iterable
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Iterable
 
 import httpx
 from loguru import logger
 
 from job_radar.config import get_settings
 from job_radar.models import RawJob
-from job_radar.sources.linkedin_email import _extract_jobs_from_html, _external_id, _guess_location
+from job_radar.sources.linkedin_email import _external_id, _extract_jobs_from_html, _guess_location
 from job_radar.text import strip_html
 
 SENDER = "jobalerts-noreply@linkedin.com"

@@ -21,6 +21,8 @@ employment_types:
   - part-time
   - contract
   - co-founder
+# Digest language: "bilingual" (EN + 中文), "en", or "zh"
+digest_lang: bilingual
 
 tracks:
   # A track matches if >=1 include_keyword appears AND >=1 required_any appears

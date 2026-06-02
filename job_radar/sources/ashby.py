@@ -9,9 +9,9 @@ Example org slugs: langchain, replicate, cohere.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Iterable
 
 from loguru import logger
 

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from job_radar.config import Profile
 from job_radar.models import Job, Score
-from job_radar.text import contains_any, count_keyword_hits
+from job_radar.text import contains_any
 
 AGENT_SIGNALS = ["agent", "rag", "llm", "mcp", "langgraph", "langchain", "vector", "embedding"]
 CRYPTO_SIGNALS = [

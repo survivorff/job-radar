@@ -79,7 +79,7 @@ class Score(BaseModel):
     matched_keywords: list[str] = Field(default_factory=list, max_length=20)
     explanation: str = ""  # 一句话 EN summary
     explanation_zh: str = ""  # 一句话中文 summary
-    suggested_resume_version: Literal["V1", "V2", "V3"] | None = None
+    suggested_resume_version: str | None = None
     cover_letter_angle: str | None = None
     stage: Literal["heuristic", "embed", "llm"] = "heuristic"
 

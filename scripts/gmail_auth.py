@@ -52,7 +52,7 @@ class _CBHandler(http.server.BaseHTTPRequestHandler):
             _CBHandler.error = params["error"][0]
             body = f"<h2>Error: {params['error'][0]}</h2>".encode()
         else:
-            body = b"<h2>Waiting for Google…</h2>"
+            body = b"<h2>Waiting for Google...</h2>"
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.end_headers()
@@ -127,7 +127,7 @@ def main() -> None:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(token, indent=2))
     print(f"\n✅ Saved refresh token to {out}")
-    print(f"   Now copy it to the server:")
+    print("   Now copy it to the server:")
     print(f"     scp {out} root@<server>:/root/.job-radar/gmail_token.json")
 
 

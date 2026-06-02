@@ -9,9 +9,6 @@ Commands:
 
 from __future__ import annotations
 
-import sys
-from typing import Optional
-
 import typer
 from loguru import logger
 from rich.console import Console
@@ -36,7 +33,7 @@ def _bootstrap() -> None:
 
 @app.command()
 def run(
-    profile_path: Optional[str] = typer.Option(None, "--profile", help="Path to profile YAML"),
+    profile_path: str | None = typer.Option(None, "--profile", help="Path to profile YAML"),
 ) -> None:
     """Collect, normalize, filter, score. Does NOT send email."""
     from job_radar.pipeline.orchestrator import run_collect_and_score
@@ -185,7 +182,7 @@ def stats(days: int = typer.Option(7, "--days", help="Window in days")) -> None:
 
 @app.command(name="label")
 def label_cmd(
-    tier: Optional[str] = typer.Option(None, help="Label only one tier (high/med/low)"),
+    tier: str | None = typer.Option(None, help="Label only one tier (high/med/low)"),
     kind: str = typer.Option("daily", help="Window: daily or weekly"),
 ) -> None:
     """Walk through recent matches and record want/applied/maybe/reject/noise."""

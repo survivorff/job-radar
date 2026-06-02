@@ -9,11 +9,10 @@ from email.message import EmailMessage
 from email.utils import formataddr, make_msgid
 
 from loguru import logger
-from sqlalchemy import select
 
 from job_radar.channels.digest import Digest
 from job_radar.config import get_settings
-from job_radar.db import MatchRow, PushRow, session_scope
+from job_radar.db import PushRow, session_scope
 
 
 @dataclass

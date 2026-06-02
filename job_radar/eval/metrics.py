@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 from sqlalchemy import and_, select
 
-from job_radar.db import FeedbackRow, JobRow, MatchRow, session_scope
+from job_radar.db import FeedbackRow, MatchRow, session_scope
 
 POSITIVE = {"want", "applied"}
 POSITIVE_OR_NEUTRAL = POSITIVE | {"maybe"}
@@ -106,9 +106,10 @@ def compute(days: int = 7) -> Report:
 
 
 def render_report(report: Report) -> str:
-    from rich.table import Table
-    from rich.console import Console
     from io import StringIO
+
+    from rich.console import Console
+    from rich.table import Table
 
     buf = StringIO()
     con = Console(file=buf, force_terminal=False, width=100)

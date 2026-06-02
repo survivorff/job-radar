@@ -7,8 +7,8 @@ We filter server-side to crypto / ai tags by post-filtering.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import datetime
-from typing import Iterable
 
 from loguru import logger
 

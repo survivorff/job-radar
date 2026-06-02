@@ -22,16 +22,15 @@ import email
 import imaplib
 import os
 import re
+from collections.abc import Iterable
 from datetime import datetime, timedelta
 from email.utils import parseaddr, parsedate_to_datetime
-from typing import Iterable
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import urlparse
 
 from loguru import logger
 
 from job_radar.models import RawJob
 from job_radar.text import strip_html
-
 
 LINKEDIN_SENDER = "jobalerts-noreply@linkedin.com"
 LOOKBACK_DAYS = int(os.environ.get("JOB_RADAR_LINKEDIN_LOOKBACK", "2"))
@@ -66,16 +65,16 @@ def _fetch_imap() -> Iterable[RawJob]:
     logger.info("linkedin_email: searching since {}", since)
 
     try:
-        M = imaplib.IMAP4_SSL(host, port, timeout=20)
+        imap = imaplib.IMAP4_SSL(host, port, timeout=20)
     except Exception as exc:
         logger.warning("IMAP connect failed: {}", exc)
         return
 
     try:
-        M.login(user, pwd)
-        M.select(folder)
+        imap.login(user, pwd)
+        imap.select(folder)
         # IMAP SEARCH — case-insensitive contains
-        typ, data = M.search(
+        typ, data = imap.search(
             None,
             f'(FROM "{LINKEDIN_SENDER}" SINCE {since})',
         )
@@ -85,17 +84,17 @@ def _fetch_imap() -> Iterable[RawJob]:
         logger.info("linkedin_email: {} matching messages", len(msg_ids))
 
         for num in msg_ids[-30:]:  # latest 30 max
-            typ, msg_data = M.fetch(num, "(RFC822)")
+            typ, msg_data = imap.fetch(num, "(RFC822)")
             if typ != "OK":
                 continue
             msg = email.message_from_bytes(msg_data[0][1])
             yield from _parse_message(msg)
     finally:
         try:
-            M.close()
+            imap.close()
         except Exception:
             pass
-        M.logout()
+        imap.logout()
 
 
 def _parse_message(msg) -> Iterable[RawJob]:

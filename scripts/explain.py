@@ -10,7 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 
-from sqlalchemy import and_, or_, select
+from sqlalchemy import and_, select
 
 from job_radar.db import JobRow, MatchRow, session_scope
 

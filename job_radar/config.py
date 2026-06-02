@@ -40,7 +40,7 @@ def _home() -> Path:
 class Track(BaseModel):
     id: str
     priority: int = 99
-    resume_version: Literal["V1", "V2", "V3"] = "V1"
+    resume_version: str = "default"
     description: str = ""
     include_keywords: list[str] = Field(default_factory=list)
     required_any: list[str] = Field(default_factory=list)
@@ -74,6 +74,8 @@ class Profile(BaseModel):
     # Employment preferences — purely advisory (surfaced in the email), not a
     # hard filter. LLM uses these as context when scoring.
     employment_types: list[str] = Field(default_factory=list)  # e.g. ["full-time", "part-time", "contract", "co-founder"]
+    # Digest language: "bilingual" (EN+中文), "en", or "zh".
+    digest_lang: Literal["bilingual", "en", "zh"] = "bilingual"
     exp_min_years: int = 0
     exp_accept_unspecified: bool = True
     # Per-company controls. Normalized matching (case-insensitive, contains).

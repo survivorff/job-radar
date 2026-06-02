@@ -8,8 +8,8 @@ also keeps our request volume minimal (one page load per run).
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from datetime import datetime, timedelta
-from typing import Iterable
 from urllib.parse import urljoin
 
 from loguru import logger

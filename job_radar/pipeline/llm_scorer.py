@@ -26,97 +26,95 @@ from job_radar.models import Job, Score
 
 _SPEND_FILE_LOCK = Lock()
 
-# -------------------- prompt --------------------
+# -------------------- prompt (built dynamically from the profile) --------------------
 
-SYSTEM_PROMPT = """You are an expert job matcher for Frank. Given Frank's resume and a job description, you produce a JSON verdict.
 
-Frank's 真实背景 (based on his 10-year resume, not just aspirational framing):
-- 10+ years Java backend engineer, currently Tech Lead at a top-20 crypto exchange
-- Deep Crypto / Web3 experience: CEX backend, Meme trading platforms, Solana aggregator (Rust), copy-trading system, smart-contract wallet (Echooo)
-- Full Java / Spring Cloud / microservices / high concurrency / JVM / Kafka stack
-- Proficient Python / TypeScript / Go; learning / already writing Rust for on-chain work
-- AI工程化实践者: daily Cursor + Claude Code + self-built Agent Workflows
-- Currently pivoting AI identity: building LangGraph-based on-chain agent + open-source Agent Eval platform as representative works
+def _build_system_prompt(profile: Profile) -> str:
+    """Construct the scorer's system prompt from the user's profile + resume.
 
-Frank considers these tracks (priority 1 = top, 4 = fallback):
-1. crypto_ai      — AI Agent / RAG / MCP at crypto/web3/exchange (uses his new AI work directly)
-1. crypto_exchange — CEX / trading-engine / matching / market-data / derivatives backend
-1. web3_backend   — DEX / wallet / aggregator / multichain / copy-trading / meme platform / smart-contract backend
-2. leadership     — CTO / co-founder / VP Eng / founding engineer at a remote startup
-3. ai_app_arch    — AI application architect at big internet companies
-3. ai_infra       — AI platform / LLM infra / gateway / vector / inference
-4. senior_backend — general Java/distributed/high-concurrency backend (tier 4 = only if role is senior+ at a name-brand company)
-4. fullstack      — full-stack engineer (tier 4 = fallback)
+    Keeping this profile-driven (instead of hardcoded for one person) is what
+    makes job-radar reusable by anyone.
+    """
+    resume = _load_resume(profile)
 
-CRITICAL SCORING RULE based on priority:
-- Priority 1 tracks (crypto_ai, crypto_exchange, web3_backend): these are Frank's CORE. If a JD matches ANY priority-1 track, it deserves overall 85-100 (assuming seniority + remote match).
-- Priority 2 (leadership): CTO/co-founder at a funded remote startup → 85-95.
-- Priority 3 (ai_app_arch, ai_infra): good but NOT Frank's primary focus right now. Cap at 85 unless the company is truly exceptional (Anthropic, OpenAI, Stripe AI team).
-- Priority 4 (senior_backend, fullstack): cap at 78. These are fallback — Frank's edge is crypto, not generic Java.
+    # Describe the user's tracks, sorted by priority.
+    tracks_sorted = sorted(profile.tracks, key=lambda t: t.priority)
+    track_lines = []
+    for t in tracks_sorted:
+        kws = ", ".join(t.include_keywords[:12])
+        track_lines.append(
+            f"- (priority {t.priority}) `{t.id}` — {t.description or t.id}. "
+            f"Signals: {kws}"
+        )
+    tracks_block = "\n".join(track_lines)
 
-In other words: a remote Senior Backend Engineer at GitLab (priority 4) should score LOWER than a remote Backend Engineer at Uniswap (priority 1), even if GitLab is a bigger brand.
+    remote_rule = (
+        "The user is REMOTE-ONLY. On-site-only roles → overall ≤ 40. "
+        "Acceptable: Remote / Worldwide / Global / Anywhere / Distributed, or any city "
+        "label if the role explicitly allows fully-remote."
+        if profile.remote_only
+        else "The user accepts remote and on-site roles in their allowed locations."
+    )
+    employment = ", ".join(profile.employment_types) if profile.employment_types else "full-time"
+    seniority_ok = ", ".join(profile.seniority_allowlist) or "Senior, Staff, Principal, Lead"
+    seniority_no = ", ".join(profile.seniority_blocklist) or "Junior, Intern, Graduate"
+    excludes = ", ".join(profile.exclude_keywords[:30]) or "(none)"
 
-Hard requirements (zero overall + verdict=no if any fail):
-- Seniority: Senior / Staff / Principal / Tech Lead / Architect. Reject Junior / Intern / Associate / Fellow / Graduate.
-- Employment type: Frank accepts full-time, part-time, contract, co-founder / technical-partner, consulting. He does NOT accept internships or "Accelerator Program" style trainee tracks unless explicitly Senior+.
-- Frank is REMOTE-ONLY right now. Acceptable locations: "Remote", "Worldwide", "Global", "Anywhere", "Distributed", or any city label if the role explicitly allows fully-remote. On-site-only roles → overall ≤ 40 regardless of other signals.
-- NOT interested: pure research scientist, pure frontend, product manager, compliance / AML / KYC analyst, sales, marketing, UX, graphic, customer-service, HR, recruiter, operations, listing/partnership manager, solutions engineer (unless it's explicitly an architecture/engineering role).
-- Must be an engineering role (or engineering manager / tech lead / staff eng).
+    # Valid resume-version labels come from the profile's tracks.
+    versions = sorted({t.resume_version for t in profile.tracks if t.resume_version})
+    versions_str = " | ".join(f'"{v}"' for v in versions) if versions else '"default"'
 
-Track-matching logic (STRICT — matched_tracks must reflect what Frank actually would work on, not just what keywords appear):
-- Each track requires a GENUINE role match, not just overlapping keywords in a different context
-- `crypto_ai` = crypto context AND AI agent/LLM/RAG engineering work
-- `crypto_exchange` = builds the exchange itself (matching engine, order book, market data, derivatives, spot, perps, liquidity)
-- `web3_backend` = backend for DEX / wallet / aggregator / copy-trading / smart-contract. NOT generic "mentions blockchain"
-- `ai_app_arch` = builds LLM-powered products. NOT "uses AI tools occasionally"
-- `ai_infra` = platform/infra for LLM serving, vector DBs, gateways, inference. NOT generic Kafka/Redis/K8s
-- `senior_backend` = non-crypto senior Java/distributed backend. Mark this ONLY if the role is clearly generic backend (not at a crypto/AI company)
-- A Product Designer / Product Manager / Sales / Marketing / Ops / Analyst role matches ZERO tracks. Return matched_tracks=[] and verdict="no".
-- Set empty matched_tracks=[] if nothing truly fits. Do NOT pad matched_tracks to look comprehensive.
+    return f"""You are an expert job matcher for a candidate named "{profile.name}".
+Given the candidate's resume and a single job description, output a JSON verdict.
 
-Output JSON ONLY with this schema:
-{
-  "dims": {
+<candidate_resume>
+{resume}
+</candidate_resume>
+
+The candidate is looking for roles in these tracks (priority 1 = most wanted):
+{tracks_block}
+
+SCORING BY PRIORITY (this is the most important rule):
+- A JD matching a priority-1 track deserves overall 85-100 (if seniority + location also fit).
+- Each lower priority number caps the ceiling: priority 2 → up to ~92, priority 3 → up to ~85,
+  priority 4 → up to ~78. The candidate's edge is the priority-1 tracks; generic roles score lower
+  even at famous companies.
+
+HARD REQUIREMENTS (set overall=0 and verdict="no" if any fail):
+- Seniority must be one of: {seniority_ok}. Reject: {seniority_no}.
+- Employment type acceptable to candidate: {employment}. Reject internships / trainee "accelerator"
+  programs unless explicitly senior.
+- {remote_rule}
+- Must be an engineering / architecture / technical-leadership role. Reject pure: research scientist,
+  frontend-only, product manager, sales, marketing, UX/design, HR/recruiter, customer support,
+  compliance/AML/KYC analyst, operations.
+- Titles containing any of these are auto-reject: {excludes}
+
+TRACK MATCHING (be strict — matched_tracks must reflect genuine fit, not keyword overlap):
+- Only include a track id in matched_tracks if the role is genuinely that kind of work.
+- If nothing truly fits, return matched_tracks=[] and verdict="no". Do NOT pad the list.
+
+Output JSON ONLY with this exact schema:
+{{
+  "dims": {{
     "tech_stack": int 0-100,
     "scenario": int 0-100,
     "seniority": int 0-100,
     "company_fit": int 0-100
-  },
+  }},
   "overall": int 0-100,
-  "matched_tracks": [string],
-  "reasons": [string],             // 2-4 concrete reasons in English, each ≤ 20 words
-  "reasons_zh": [string],          // same 2-4 reasons in Chinese
-  "risks": [string],
-  "risks_zh": [string],
-  "explanation": string,            // ≤ 30 words English
-  "explanation_zh": string,         // ≤ 30 words Chinese
-  "suggested_resume_version": "V1" | "V2" | "V3",
+  "matched_tracks": [string],   // subset of the track ids above
+  "reasons": [string],          // 2-4 concrete reasons in English, each ≤ 20 words
+  "reasons_zh": [string],       // same reasons in Chinese
+  "risks": [string],            // 1-3 things to verify / worry about, English
+  "risks_zh": [string],         // same in Chinese
+  "explanation": string,        // one sentence ≤ 30 words, English
+  "explanation_zh": string,     // one sentence ≤ 30 words, Chinese
+  "suggested_resume_version": {versions_str},  // which resume variant to send
   "verdict": "strong_yes" | "yes" | "maybe" | "no"
-}
+}}
 
-Calibration:
-- strong_yes → overall ≥ 88
-- yes        → 75–87
-- maybe      → 60–74
-- no         → < 60
-
-Calibration notes for tier-stretching:
-- A remote-first senior/staff role at a top AI or crypto company on Frank's radar (Alchemy, LangChain, Anthropic, OpenAI, Cohere, Databricks, Stripe, Helius, Polygon, Uniswap, Ethena, Fireblocks, LayerZero, Jump, GitLab, Vercel, Supabase, Sentry, Linear, Notion, GitHub, etc.) with tech stack 80%+ match → push to strong_yes even without crypto_ai track
-- Technical co-founder / founding engineer / CTO roles at a well-funded startup (remote) → push to strong_yes if Frank could realistically lead the engineering
-- Generic Senior Backend at a random non-Crypto, non-AI company → cap at 80 (yes at best)
-
-Track bonuses (apply AFTER computing base dims):
-- If `crypto_ai` in matched_tracks AND role is remote: add +8 to overall (capped at 100)
-- If `crypto_exchange` or `web3_backend` in matched_tracks AND company is a top crypto brand (OKX / Binance / Bybit / Coinbase / Kraken / Chainlink / Circle / Ripple / Polygon / Consensys / Gemini / Bitget / HTX / Bitmart / MEXC / Uniswap / Jupiter / Raydium / LayerZero / dYdX / Aave / Alchemy / Helius / Phantom / Ledger / Ethena / Nansen / Dune): add +5 to overall
-- If `ai_infra` or `ai_app_arch` at a top-3 AI lab / infra (Anthropic, OpenAI, Cohere, Mistral, Perplexity, Databricks, Stripe, Scale AI, LangChain, Anyscale, Baseten, Modal, Fireworks, Together): add +5 to overall BUT still cap at 85 unless it's truly exceptional
-- If `leadership` (CTO / Co-founder / VP Eng / Founding) at a well-funded remote startup: add +6 to overall
-- If only `senior_backend` or `fullstack` matched (no priority-1 or priority-2 track): cap overall at 78
-- If only `ai_app_arch` or `ai_infra` matched (no priority-1 track): cap overall at 85
-
-Resume version hint:
-- V1 = AI Application Architect
-- V2 = AI Infra / Platform
-- V3 = Crypto × AI (also use this for pure crypto_exchange / web3_backend roles)
+Calibration: strong_yes → overall ≥ 88 ; yes → 75-87 ; maybe → 60-74 ; no → < 60.
 """
 
 USER_TEMPLATE = """<resume>
@@ -236,6 +234,7 @@ def score(
 
     resume = _load_resume(profile)
     description = (job.description or "")[:3000]
+    system_prompt = _build_system_prompt(profile)
     prompt = USER_TEMPLATE.format(
         resume=resume,
         company=job.company,
@@ -251,7 +250,7 @@ def score(
 
     try:
         resp = chat(
-            system=SYSTEM_PROMPT,
+            system=system_prompt,
             user=prompt,
             max_tokens=700,
             temperature=0.1,
@@ -277,7 +276,8 @@ def score(
         # Verdict can override tier if mismatch
         verdict = data.get("verdict") or ""
         suggested = data.get("suggested_resume_version")
-        if suggested not in ("V1", "V2", "V3"):
+        valid_versions = {t.resume_version for t in profile.tracks if t.resume_version}
+        if suggested not in valid_versions:
             suggested = None
 
         s = Score(

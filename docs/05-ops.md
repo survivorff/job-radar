@@ -10,11 +10,11 @@
 
 ```bash
 # crontab -e (macOS / Linux; cron uses the local timezone)
-5 * * * * cd ~/code/job-hunting && /usr/local/bin/uv run job-radar run >> logs/radar.log 2>&1
+5 * * * * cd ~/code/job-radar && /usr/local/bin/uv run job-radar run >> logs/radar.log 2>&1
 # daily digest at 09:00 local time
-0 9 * * * cd ~/code/job-hunting && /usr/local/bin/uv run job-radar digest --daily
+0 9 * * * cd ~/code/job-radar && /usr/local/bin/uv run job-radar digest --daily
 # weekly digest Sunday 21:00 local time
-0 21 * * 0 cd ~/code/job-hunting && /usr/local/bin/uv run job-radar digest --weekly
+0 21 * * 0 cd ~/code/job-radar && /usr/local/bin/uv run job-radar digest --weekly
 ```
 
 **弱点**：电脑关机不跑。海外 remote crypto 岗延迟敏感 → M5 迁 GitHub Actions。
@@ -107,7 +107,7 @@ Last 7 days:
 
 ### 抓取行为自律
 
-- User-Agent: `job-radar/0.1 (+github.com/<me>/job-hunting; personal use; contact: <email>)`
+- User-Agent: `job-radar/0.1 (+github.com/<me>/job-radar; personal use; contact: <email>)`
 - 所有请求带 10s 超时
 - 单站 QPS ≤ 2
 - 遵守 robots.txt

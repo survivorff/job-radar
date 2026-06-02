@@ -8,8 +8,8 @@ one line here + one module.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import Callable, Iterable
 
 from job_radar.models import RawJob
 from job_radar.sources import (

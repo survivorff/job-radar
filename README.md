@@ -3,6 +3,8 @@
 > Stop drowning in job-board noise. Let an LLM read your resume, score every JD across
 > 15+ sources, and email you the best matches — with bilingual reasons for each.
 
+English | [中文](README.zh-CN.md)
+
 **job-radar** is a personal job-discovery engine that you run yourself. It scrapes public
 job sources (official ATS APIs + remote job boards), filters against your profile, scores
 each role with an LLM that has actually read your resume, and sends you a clean daily digest.

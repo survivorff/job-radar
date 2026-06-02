@@ -13,7 +13,6 @@ import json
 from dataclasses import dataclass
 
 import httpx
-from loguru import logger
 
 from job_radar.config import get_settings
 

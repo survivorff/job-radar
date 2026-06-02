@@ -49,7 +49,7 @@
 在本地（MacBook）：
 
 ```bash
-cd ~/ai/kiro/ai_learn/job-hunting
+cd ~/ai/kiro/ai_learn/job-radar
 export GOOGLE_CLIENT_ID='<your-client-id>.apps.googleusercontent.com'
 export GOOGLE_CLIENT_SECRET='<your-client-secret>'
 uv run python scripts/gmail_auth.py

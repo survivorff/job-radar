@@ -209,18 +209,43 @@ def load_digest(kind: str) -> Digest:
         )
 
 
-def render_digest_html(digest: Digest) -> str:
-    return _env.get_template("digest.html.j2").render(d=digest)
+def _resolve_lang(lang: str | None) -> str:
+    if lang:
+        return lang
+    try:
+        from job_radar.config import load_profile
+
+        return getattr(load_profile(), "digest_lang", "bilingual") or "bilingual"
+    except Exception:
+        return "bilingual"
 
 
-def render_digest_text(digest: Digest) -> str:
-    return _env.get_template("digest.txt.j2").render(d=digest)
+def render_digest_html(digest: Digest, lang: str | None = None) -> str:
+    return _env.get_template("digest.html.j2").render(d=digest, lang=_resolve_lang(lang))
 
 
-def render_digest_subject(digest: Digest) -> str:
+def render_digest_text(digest: Digest, lang: str | None = None) -> str:
+    return _env.get_template("digest.txt.j2").render(d=digest, lang=_resolve_lang(lang))
+
+
+def render_digest_subject(digest: Digest, lang: str | None = None) -> str:
+    lang = _resolve_lang(lang)
     icon = "🎯"
     c = digest.counts
     date_str = digest.generated_at.strftime("%Y-%m-%d")
+    if lang == "zh":
+        if not digest.has_content:
+            return f"{icon} Job Radar 日报 — {date_str}（暂无新岗位）"
+        kind_zh = "日报" if digest.kind == "daily" else "周报"
+        return f"{icon} Job Radar {kind_zh} — {date_str}（{c['high']} 高 / {c['med']} 中 / {c['low']} 候选）"
+    if lang == "en":
+        if not digest.has_content:
+            return f"{icon} Job Radar {digest.kind} — {date_str} (nothing new)"
+        return (
+            f"{icon} Job Radar {digest.kind} — {date_str} "
+            f"({c['high']} high / {c['med']} med / {c['low']} candidates)"
+        )
+    # bilingual (default)
     if not digest.has_content:
         return f"{icon} Job Radar {digest.kind} — {date_str} (nothing new)"
     kind_zh = "日报" if digest.kind == "daily" else "周报"

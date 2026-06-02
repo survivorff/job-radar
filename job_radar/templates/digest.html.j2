@@ -6,7 +6,8 @@
   <span class="bar-value">{{ value }}</span>
 </div>
 {%- endmacro %}
-{% macro render_item(item) -%}
+{% set lang = lang | default("bilingual") %}
+{% macro render_item(item, lang) -%}
 <div class="card {{ item.tier }}">
   <span class="score">{{ item.score }}</span>
   <div class="title">
@@ -16,7 +17,7 @@
   <div class="meta">
     <span class="loc">{{ item.location or "—" }}</span>
     {% if item.extra_locations %}<span class="extra-loc">+ {{ item.extra_locations | join(" / ") }}</span>{% endif %}
-    {% if item.is_remote %}<span class="tag remote">remote · 远程</span>{% endif %}
+    {% if item.is_remote %}<span class="tag remote">remote</span>{% endif %}
     {% for t in item.matched_tracks %}<span class="tag track">{{ t }}</span>{% endfor %}
     {% if item.suggested_resume_version %}
       <span class="tag resume">resume {{ item.suggested_resume_version }}</span>
@@ -26,8 +27,8 @@
 
   {% if item.explanation or item.explanation_zh %}
     <div class="summary">
-      {% if item.explanation %}<div class="en">{{ item.explanation }}</div>{% endif %}
-      {% if item.explanation_zh %}<div class="zh">{{ item.explanation_zh }}</div>{% endif %}
+      {% if item.explanation and lang != "zh" %}<div class="en">{{ item.explanation }}</div>{% endif %}
+      {% if item.explanation_zh and lang != "en" %}<div class="zh">{{ item.explanation_zh }}</div>{% endif %}
     </div>
   {% endif %}
 
@@ -51,10 +52,10 @@
     <div class="section">
       <div class="section-title">✓ Why · 为什么匹配</div>
       <div class="two-col">
-        {% if item.reasons %}
+        {% if item.reasons and lang != "zh" %}
         <ul class="en">{% for r in item.reasons %}<li>{{ r }}</li>{% endfor %}</ul>
         {% endif %}
-        {% if item.reasons_zh %}
+        {% if item.reasons_zh and lang != "en" %}
         <ul class="zh">{% for r in item.reasons_zh %}<li>{{ r }}</li>{% endfor %}</ul>
         {% endif %}
       </div>
@@ -65,10 +66,10 @@
     <div class="section">
       <div class="section-title risk">⚠ Verify · 需要验证</div>
       <div class="two-col">
-        {% if item.risks %}
+        {% if item.risks and lang != "zh" %}
         <ul class="en risks">{% for r in item.risks %}<li>{{ r }}</li>{% endfor %}</ul>
         {% endif %}
-        {% if item.risks_zh %}
+        {% if item.risks_zh and lang != "en" %}
         <ul class="zh risks">{% for r in item.risks_zh %}<li>{{ r }}</li>{% endfor %}</ul>
         {% endif %}
       </div>
@@ -167,18 +168,18 @@
 
   {% if d.high %}
     <h2>🔴 High priority · 首投 ({{ d.high | length }})</h2>
-    {% for item in d.high %}{{ render_item(item) }}{% endfor %}
+    {% for item in d.high %}{{ render_item(item, lang) }}{% endfor %}
   {% endif %}
 
   {% if d.med %}
     <h2>🟡 Medium · 精投 ({{ d.med | length }})</h2>
-    {% for item in d.med %}{{ render_item(item) }}{% endfor %}
+    {% for item in d.med %}{{ render_item(item, lang) }}{% endfor %}
   {% endif %}
 
   {% if d.low %}
     <details>
       <summary>🟢 Candidates · 候选池 ({{ d.low | length }})</summary>
-      {% for item in d.low %}{{ render_item(item) }}{% endfor %}
+      {% for item in d.low %}{{ render_item(item, lang) }}{% endfor %}
     </details>
   {% endif %}
 

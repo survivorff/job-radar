@@ -13,8 +13,8 @@ the user sees one card with merged locations instead of 6 near-identical cards.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 # Pattern: strip trailing "(City)" / "(Remote)" / " - City" / " (US/EU)"
 _LOCATION_SUFFIX = re.compile(

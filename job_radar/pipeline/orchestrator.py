@@ -15,7 +15,6 @@ import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Iterable
 
 from loguru import logger
 from sqlalchemy import select
@@ -221,7 +220,7 @@ def _score_parallel(
 
     results: dict[int, tuple] = {}  # match_id -> (Score, stage, cost)
     # Persist in batches so an early exit (budget hit / signal) still saves progress
-    BATCH = 50
+    batch_size = 50
     with span("llm_score_parallel", count=len(jobs_to_score), workers=max_workers):
         with ThreadPoolExecutor(max_workers=max_workers) as pool:
             futures = {
@@ -247,7 +246,7 @@ def _score_parallel(
                         llm_budget.today_spend() if llm_budget else 0,
                         llm_budget.limit_cny if llm_budget else 0,
                     )
-                if len(batch) >= BATCH:
+                if len(batch) >= batch_size:
                     _persist_batch(batch, summary)
                     batch.clear()
             # flush remainder
